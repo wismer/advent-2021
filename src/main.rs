@@ -1,8 +1,59 @@
 use std::fs::read_to_string;
+use std::env::args;
 
 fn main() {
     day_one_part_one();
     day_one_part_two();
+
+    day_two_part_one();
+    day_two_part_two();
+}
+
+fn day_two_part_one() {
+    let data = read_to_string("./day2.txt").unwrap();
+    let mut depth = 0;
+    let mut horizontal = 0;
+    let mut aim = 0;
+
+    for line in data.lines() {
+        let instruction: Vec<&str> = line.split(" ").collect();
+        let direction = instruction[0];
+        let value: usize = instruction[1].parse().unwrap();
+
+        match direction {
+            "forward" => horizontal += value,
+            "down" => depth += value,
+            "up" => depth -= value,
+            _ => unimplemented!()
+        }
+    }
+
+    println!("depth: {}, horizontal: {}, aim: {}, result: {}", depth, horizontal, aim, horizontal * depth);
+}
+
+fn day_two_part_two() {
+    let data = read_to_string("./day2.txt").unwrap();
+    let mut depth = 0;
+    let mut horizontal = 0;
+    let mut aim = 0;
+
+    for line in data.lines() {
+        let instruction: Vec<&str> = line.split(" ").collect();
+        let direction = instruction[0];
+        let value: usize = instruction[1].parse().unwrap();
+
+        match direction {
+            "forward" => {
+                horizontal += value;
+                depth += aim * value;
+            },
+            "down" => aim += value,
+            "up" => aim -= value,
+            _ => unimplemented!()
+        }
+    }
+    println!("depth: {}, horizontal: {}, aim: {}, result: {}", depth, horizontal, aim, horizontal * depth);
+
 }
 
 
