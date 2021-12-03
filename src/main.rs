@@ -7,6 +7,9 @@ fn main() {
 
     day_two_part_one();
     day_two_part_two();
+
+    day_three_part_one();
+    day_three_part_two();
 }
 
 fn day_two_part_one() {
@@ -113,4 +116,93 @@ fn day_one_part_two() {
     }
 
     println!("Total: {}", tally);
+}
+
+fn day_three_part_one() {
+    let mut gamma = 0;
+    let data: Vec<usize> = read_to_string("./day3.txt")
+        .unwrap()
+        .lines()
+        .map(|l| usize::from_str_radix(l, 2).unwrap())
+        .collect();
+
+    let flags: [usize; 12] = [
+        1 << 12,
+        1 << 11,
+        1 << 10,
+        1 << 9,
+        1 << 8,
+        1 << 7,
+        1 << 6,
+        1 << 5,
+        1 << 4,
+        1 << 3,
+        1 << 2,
+        1
+    ];
+    let line_count = data.len() / 2;
+    for flag in flags {
+        let mut count = 0;
+        for set in &data {
+            if set & flag != 0 {
+                count += 1;
+            }
+        }
+
+        if count >= line_count {
+            println!("{:#07b}\n{:#07b}\n-----\n{:#07b}\n", gamma, flag, gamma ^ flag);
+            gamma = gamma ^ flag;
+        }
+    }
+    let epsilon = !gamma & 0b111111111111;
+    println!("Gamma: {}, Epsilon: {}, power consumption: {}", gamma, epsilon, gamma * epsilon);
+
+}
+
+fn day_three_part_two() {
+    let data: Vec<usize> = read_to_string("./day3.txt")
+        .unwrap()
+        .lines()
+        .map(|l| usize::from_str_radix(l, 2).unwrap())
+        .collect();
+
+    let o2 = resolve_oxygen_rating(&data, 11, true);
+    let co2 = resolve_oxygen_rating(&data, 11, false);
+    println!("oxygen: {} co2: {}, result: {}", o2, co2, o2 * co2);
+}
+
+fn resolve_oxygen_rating(values: &Vec<usize>, bit_position: usize, find_majority: bool) -> usize {
+    let flag = 1 << bit_position;
+    let mut leading_bits: Vec<usize> = vec![];
+    let mut nonleading_bits: Vec<usize> = vec![];
+    for set in values {
+        if flag & set != 0 {
+            // yes for O2, no for CO2
+            leading_bits.push(*set)
+        } else {
+            nonleading_bits.push(*set);
+        }
+    }
+
+    let leading_bits_size = leading_bits.len();
+    let nonleading_bits_size = nonleading_bits.len();
+    let data_to_process: Vec<usize>;
+    if !find_majority {
+
+        println!("Data: {:?}", nonleading_bits);
+    }
+    if find_majority && leading_bits_size >= nonleading_bits_size {
+        data_to_process = leading_bits;
+    } else if find_majority {
+        data_to_process = nonleading_bits;
+    } else if leading_bits_size >= nonleading_bits_size {
+        data_to_process = nonleading_bits
+    } else {
+        data_to_process = leading_bits;
+    }
+    if data_to_process.len() >= 2 {
+        resolve_oxygen_rating(&data_to_process, bit_position - 1, find_majority)
+    } else {
+        return data_to_process[0]
+    }
 }
