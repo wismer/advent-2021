@@ -1,5 +1,5 @@
-use std::fs::read_to_string;
-use std::env::args;
+use std::fs::{read_to_string, read};
+use std::collections::HashMap;
 
 fn main() {
     day_one_part_one();
@@ -10,6 +10,12 @@ fn main() {
 
     day_three_part_one();
     day_three_part_two();
+
+    // day_four_part_one();
+
+    day_five_part_one();
+
+    day_six();
 }
 
 fn day_two_part_one() {
@@ -187,10 +193,6 @@ fn resolve_oxygen_rating(values: &Vec<usize>, bit_position: usize, find_majority
     let leading_bits_size = leading_bits.len();
     let nonleading_bits_size = nonleading_bits.len();
     let data_to_process: Vec<usize>;
-    if !find_majority {
-
-        println!("Data: {:?}", nonleading_bits);
-    }
     if find_majority && leading_bits_size >= nonleading_bits_size {
         data_to_process = leading_bits;
     } else if find_majority {
@@ -204,5 +206,93 @@ fn resolve_oxygen_rating(values: &Vec<usize>, bit_position: usize, find_majority
         resolve_oxygen_rating(&data_to_process, bit_position - 1, find_majority)
     } else {
         return data_to_process[0]
+    }
+}
+
+#[derive(Debug)]
+struct Line {
+    start: (usize, usize),
+    end: (usize, usize)
+}
+
+impl Line {
+    pub fn parse(line: &str) -> (usize, usize) {
+        let parsed: Vec<usize> = line.split(",").map(|l| l.parse().unwrap()).collect();
+        (parsed[0], parsed[1])
+    }
+}
+
+fn day_five_part_one() {
+    let data = read_to_string("./day5.txt").unwrap();
+    let mut lines: Vec<Line> = vec![];
+    let mut max_y = 0;
+    let mut max_x = 0;
+    for line in data.lines() {
+        let parsed_line: Vec<(usize, usize)> = line.split(" -> ").map(|line| Line::parse(line)).collect();
+        let line = Line { start: parsed_line[0], end: parsed_line[1] };
+        if line.end.0 >= max_x {
+            max_x = line.end.0;
+        }
+        if line.end.1 >= max_y {
+            max_y = line.end.1;
+        }
+        lines.push(line);
+    }
+
+    let line_count = lines.len();
+    let mut all_coords: Vec<usize> = vec![];
+
+    for line in lines {
+        let (line_start_x, line_start_y) = line.start;
+        let (line_end_x, line_end_y) = line.end;
+        if line_start_x == line_end_x {
+            for y in line_start_y..line_end_y {
+                match all_coords.get_mut(line_end_x + y) {
+                    Some(coord) => *coord += 1,
+                    None => {}
+                }
+            }
+        } else {
+            println!("sad x: {}", line_start_x * max_x);
+
+            let y = line_start_y * max_y;
+            for x in line_start_x..line_end_x {
+                match all_coords.get_mut(x + y) {
+                    Some(coord) => *coord += 1,
+                    None => {}
+                }
+            }
+        }
+    }
+    println!("{:?}", all_coords);
+
+}
+
+fn day_six() {
+    let mut inputs: Vec<usize> = read_to_string("./day6.txt")
+        .unwrap()
+        .split(",")
+        .map(|x| x.parse().unwrap())
+        .collect();
+
+    let mut values: Vec<usize> = vec![0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for v in inputs {
+        values[v as usize] += 1;
+    }
+
+    for end in [80, 256] {
+        let mut current = values.clone();
+        println!("before: {:?}", current);
+        for _ in 0..end {
+            let mut new_state: Vec<usize> = current.clone();
+            let zeroes = new_state[0];
+            new_state.rotate_left(1);
+            new_state[6] += zeroes;
+            // println!("before: {:?}", current);
+            // println!("after : {:?}\n", new_state);
+            current = new_state;
+        }
+        let sum: usize = current.iter().sum();
+        println!("end: {}, sum: {}", end, sum);
     }
 }
