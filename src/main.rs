@@ -16,6 +16,7 @@ fn main() {
     day_five_part_one();
 
     day_six();
+    day_seven();
 }
 
 fn day_two_part_one() {
@@ -295,4 +296,67 @@ fn day_six() {
         let sum: usize = current.iter().sum();
         println!("end: {}, sum: {}", end, sum);
     }
+}
+
+fn day_seven() {
+    let inputs: Vec<usize> = read_to_string("./day7.txt")
+        .unwrap()
+        .split(",")
+        .map(|x| x.parse().unwrap())
+        .collect();
+
+    let p1 = {
+        let max = *inputs.iter().max().unwrap();
+        let min = *inputs.iter().min().unwrap();
+        let mut movements: Vec<usize> = vec![];
+
+        for i in min..max {
+            let mut subtotal = 0;
+            for crab in &inputs {
+                let diff = if i > *crab {
+                    i - crab
+                } else {
+                    crab - i
+                };
+                subtotal += diff;
+            }
+            movements.push(subtotal);
+        }
+
+        *movements.iter().min().unwrap()
+    };
+
+    let p2 = {
+        let max = *inputs.iter().max().unwrap();
+        let min = *inputs.iter().min().unwrap();
+        let mut movements: Vec<usize> = vec![];
+
+        for i in min..max {
+            let mut subtotal = 0;
+            for crab in &inputs {
+                let diff = if i > *crab {
+                    i - crab
+                } else {
+                    crab - i
+                };
+                subtotal += calculate_cost(diff);
+            }
+            movements.push(subtotal);
+        }
+
+        *movements.iter().min().unwrap()
+
+    };
+
+    println!("p1: {}, p2: {}", p1, p2);
+}
+
+fn calculate_cost(mut distance: usize) -> usize {
+    let mut cost = 0;
+    while distance != 0 {
+        cost += distance;
+        distance -= 1;
+    }
+
+    cost
 }
