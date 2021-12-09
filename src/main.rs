@@ -1,22 +1,23 @@
 use std::fs::{read_to_string, read};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 fn main() {
-    day_one_part_one();
-    day_one_part_two();
+    // day_one_part_one();
+    // day_one_part_two();
 
-    day_two_part_one();
-    day_two_part_two();
+    // day_two_part_one();
+    // day_two_part_two();
 
-    day_three_part_one();
-    day_three_part_two();
+    // day_three_part_one();
+    // day_three_part_two();
 
-    // day_four_part_one();
+    // // day_four_part_one();
 
-    day_five_part_one();
+    // day_five_part_one();
 
-    day_six();
-    day_seven();
+    // day_six();
+    // day_seven();
+    day_eight();
 }
 
 fn day_two_part_one() {
@@ -360,3 +361,148 @@ fn calculate_cost(mut distance: usize) -> usize {
 
     cost
 }
+
+// enum Segment {
+//     A,
+//     B,
+//     C,
+//     D,
+//     E,
+//     F,
+//     G
+// }
+#[derive(Debug, Clone)]
+struct SegmentPiece {
+    pub raw_segment: String,
+    pub number: Option<usize>
+}
+
+fn day_eight() {
+    // entries consist of:
+    //   10 unique signal patterns
+    //   delimited by |
+    //   final output is a 4 digit value
+    // ex 
+    // 7 uniquely uses 3 segments
+    // 4 uniquely uses 4 segments
+    //   for 4, it's like if "eafb" is the signal, then "bcdf" are the segments
+    //   deduction should be used?
+    let input = read_to_string("./day8.txt")
+        .unwrap();
+
+    let pt1 = {
+
+        let mut total = 0;
+        for line in input.lines() {
+            let parsed: Vec<Vec<String>> = line
+                .split(" | ")
+                .map(|x| {
+                    let p: Vec<String> = x.split(" ")
+                        .map(|x| x.to_string())
+                        .collect();
+                    p
+                })
+                .collect();
+            total += count_unique_digits(&parsed[1]);
+            
+        }
+        total
+    };
+
+    let pt2 = {
+        // diff("cfgedb".to_string(), "dgc".to_string())
+        let mut total: usize = 0;
+        for line in input.lines() {
+            let mut parsed: Vec<Vec<String>> = line
+                .split(" | ")
+                .map(|x| {
+                    let p: Vec<String> = x.split(" ")
+                        .map(|x| x.to_string())
+                        .collect();
+                    p
+                })
+                .collect();
+
+            {
+                let mut seg_hash: HashMap<usize, HashSet<_>> = HashMap::new();
+                for segment in &parsed[0] {
+                    let len = segment.len();
+                    match len {
+                        2 => seg_hash.insert(1, segment.chars().collect()),
+                        3 => seg_hash.insert(7, segment.chars().collect()),
+                        4 => seg_hash.insert(4, segment.chars().collect()),
+                        8 => seg_hash.insert(8, segment.chars().collect()),
+                        _ => None
+                    };
+                }
+                let mut output = String::new();
+                for segment in &parsed[1] {
+                    let decoded: String = decode_segment(segment, &mut seg_hash).to_string();
+                    output.push_str(&decoded);
+                }
+                total += output.parse::<usize>().unwrap();
+                println!("{:?}", output);
+            }
+        }
+        println!("total: {}", total);
+    };
+
+    println!("part 1: {}\npart 2: {}", pt1, 1);
+}
+
+fn decode_segment(segment: &str, seg_hash: &mut HashMap<usize, HashSet<char>>) -> usize {
+    let mut set: HashSet<_> = segment.chars().collect();
+    let one = seg_hash.get(&1).unwrap();
+    let four = seg_hash.get(&4).unwrap();
+    // let seven = seg_hash.get(&7).unwrap();
+    let result = match segment.len() {
+        2 => 1,
+        3 => 7,
+        4 => 4,
+        5 => match set.difference(one).count() {
+            3 => 3,
+            _ => match set.difference(four).count() {
+                3 => 2,
+                _ => 5
+            }
+        },
+        6 => match set.difference(one).count() {
+            5 => 6,
+            _ => match set.difference(four).count() {
+                3 => 0,
+                _ => 9
+            },
+        },
+        7 => 8,
+        _ => panic!("askdljaslkdj")
+    };
+
+    result
+}
+
+// 1 compared to 6 derives config of 1
+// 1 compared to 7 derives config of 7
+// since 4 contains 1, 
+
+// Path::Top("abc"), Path::BottomRight("abc"), Path::TopRight("abc")
+// vs
+// Path::TopRight("ab"), Path::BottomRight("ab")
+
+fn count_unique_digits(output: &Vec<String>) -> usize {
+    let mut count = 0;
+    for digit in output {
+        match digit.len() {
+            2 | 4 | 3 | 7 => count += 1,
+            _ => {}
+        }
+    }
+
+    count
+}
+// ex
+// dgc gbfde aebdgf gecfd cd gecdbaf cfgedb dbgafc efagc decb | gebdf cd fcage dabcfeg
+// 1 = CD or DC
+// 7 = G | CD or CD
+// 6 can define what 1 is through what it doesn't have in 7
+// 3 of the 7 are defined here.
+// then what 
