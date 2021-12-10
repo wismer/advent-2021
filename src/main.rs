@@ -1,3 +1,4 @@
+use std::fmt;
 use std::fs::{read_to_string, read};
 use std::collections::{HashMap, HashSet};
 
@@ -17,7 +18,8 @@ fn main() {
 
     // day_six();
     // day_seven();
-    day_eight();
+    // day_eight();
+    day_nine();
 }
 
 fn day_two_part_one() {
@@ -506,3 +508,210 @@ fn count_unique_digits(output: &Vec<String>) -> usize {
 // 6 can define what 1 is through what it doesn't have in 7
 // 3 of the 7 are defined here.
 // then what 
+
+fn day_nine() {
+    let raw_input = read_to_string("./day9.txt")
+        .unwrap();
+    let mut grid: Vec<Vec<(u32, Point)>> = vec![];
+    for (x, line) in raw_input.lines().enumerate() {
+        let mut row: Vec<(u32, Point)> = vec![];
+        for (y, n) in line.chars().enumerate() {
+            row.push((n.to_digit(10).unwrap() as u32, Point(x, y)));
+        }
+        grid.push(row);
+    }
+    let mut depth_map = DepthMap::new(grid);
+
+    depth_map.locate_lowest_points();
+    let risk_level = depth_map.get_risk_level();
+    let mut h: HashSet<(usize, usize)> = HashSet::new();
+    h.insert((1, 2));
+    h.insert((2,1));
+    h.insert((2,1));
+    // println!("risk level: {:?}", depth_map);
+    depth_map.print_map();
+    
+    let mut sizes: Vec<usize> = vec![];
+    for point in depth_map.lowest_points.clone().iter() {
+        let mut visited: HashSet<Point> = HashSet::new();
+        depth_map.search(*point, &mut visited);
+        println!("{:?}", visited);
+        let size = visited.len();
+        sizes.push(size);
+    }
+
+    sizes.sort();
+    sizes.reverse();
+    let top_three = sizes[0] * sizes[1] * sizes[2];
+    println!("{:?}", top_three);
+
+}
+
+struct DepthMap {
+    pub grid: Vec<Vec<(u32, Point)>>,
+    pub lowest_points: Vec<Point>,
+    y_max: usize,
+    x_max: usize
+}
+
+impl fmt::Debug for DepthMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // let borders = self.get_basin_borders();
+        let mut buffer = String::new();
+        for x in 0..self.x_max {
+            for y in 0..self.y_max {
+                let (v, _) = self.grid[x][y];
+                match v {
+                    9 => buffer.push_str("#"),
+                    _ => buffer.push_str(" ")
+                }
+            }
+            buffer.push_str("\n");
+        }
+        f.debug_struct("DepthMap")
+            .field("grid", &buffer)
+            .finish()
+        // f.debug_struct("DepthMap")
+        //     .
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Copy, Clone, Debug)]
+struct Point(usize, usize);
+
+
+impl DepthMap {
+    pub fn new(grid: Vec<Vec<(u32, Point)>>) -> Self {
+        let y_max = grid[0].len();
+        let x_max = grid.len();
+        DepthMap {
+            grid: grid, lowest_points: vec![], x_max: x_max, y_max: y_max
+        }
+    }
+
+    pub fn get_basin_borders(&self) {
+        let mut basin_points: Vec<(usize, usize)> = vec![];
+
+        for x in 0..self.x_max {
+            for y in 0..self.y_max {
+                let (v, _) = self.grid[x][y];
+                if v == 9 {
+                    basin_points.push((x, y));
+                }
+            }
+        }
+
+    }
+
+    pub fn print_map(&self) {
+        let mut buffer = String::new();
+        for x in 0..self.x_max {
+            for y in 0..self.y_max {
+                let (v, _) = self.grid[x][y];
+                match v {
+                    9 => buffer.push_str("#"),
+                    _ => {
+                        let is_lowest_point = self.lowest_points.iter().find(|&p| p.0 == x && p.1 == y);
+                        match is_lowest_point {
+                            Some(p) => buffer.push_str("X"),
+                            None => {
+                                    buffer.push_str(".");
+                            }
+                        }
+                    }
+                }
+            }
+            buffer.push_str("\n");
+        }
+        println!("{}", buffer);
+    }
+
+    pub fn search(&mut self, start: Point, visited: &mut HashSet<Point>) {
+        // this better work
+        visited.insert(start);
+
+        for neighbor in self.neighbors((start.0 as isize, start.1 as isize)) {
+            match neighbor {
+                Some((v, pt)) => {
+                    if v < 9 && !visited.contains(&pt) {
+                        self.search(pt, visited);
+                    }
+                },
+                None => {}
+            }
+        }
+    }
+
+    fn neighbors(&self, point: (isize, isize)) -> Vec<Option<(u32, Point)>> {
+        let mut neighbors = vec![];
+        let (x, y) = point;
+        let adjacent_points: [(isize, isize); 4] = [
+            (x - 1, y),
+            (x, y + 1),
+            (x + 1, y),
+            (x, y - 1)
+        ];
+
+        for pt in adjacent_points {
+            neighbors.push(self.get(pt));
+        }
+
+        neighbors
+    }
+
+    pub fn get_risk_level(&self) -> u32 {
+        self.lowest_points.iter().map(|Point(x,y)| {
+            let (v, _) = self.grid[*x][*y];
+            v + 1
+        }).sum()
+    }
+
+    pub fn locate_lowest_points(&mut self) {
+        for x in 0..self.x_max {
+            for y in 0..self.y_max {
+                let (v, _) = self.grid[x][y];
+                if self.has_higher_neighbors((x as isize, y as isize), v) {
+                    self.lowest_points.push(Point(x, y));
+                }
+            }
+        }
+    }
+
+    fn get(&self, point: (isize, isize)) -> Option<(u32, Point)> {
+        if point.0 < 0 || point.1 < 0 {
+            return None
+        }
+        let (x, y) = point;
+
+        match self.grid.get(x as usize) {
+            Some(row) => {
+                match row.get(y as usize) {
+                    Some(n) => Some(*n),
+                    None => None
+                }
+            },
+            None => None
+        }
+    }
+
+    fn has_higher_neighbors(&self, point: (isize, isize), value: u32) -> bool {
+        let (x, y) = point;
+        let adjacent_points: [(isize, isize); 4] = [
+            (x - 1, y),
+            (x, y + 1),
+            (x + 1, y),
+            (x, y - 1)
+        ];
+        let mut is_lowest_point = false;
+        for point in adjacent_points {
+            is_lowest_point = match self.get(point) {
+                Some((n, _)) => n > value,
+                None => true
+            };
+            if !is_lowest_point {
+                return false
+            }
+        }
+        is_lowest_point
+    }
+}
