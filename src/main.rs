@@ -1,8 +1,10 @@
 use std::fmt;
 use std::fs::{read_to_string, read};
 use std::collections::{HashMap, HashSet};
+mod day13;
 
 fn main() {
+    day13::solve();
     // day_one_part_one();
     // day_one_part_two();
 
@@ -19,7 +21,8 @@ fn main() {
     // day_six();
     // day_seven();
     // day_eight();
-    day_nine();
+    // day_nine();
+    day_ten();
 }
 
 fn day_two_part_one() {
@@ -714,4 +717,41 @@ impl DepthMap {
         }
         is_lowest_point
     }
+}
+
+fn day_ten() {
+    let input = read_to_string("./day10.txt").unwrap();
+    let mut total = 0;
+    for line in input.lines() {
+        total += count_errors(line);
+    }
+    println!("total p1: {}", total);
+}
+
+fn count_errors(line: &str) -> u32 {
+    println!("{}", line);
+    let mut chars: Vec<char> = line.chars().collect();
+    let (mut squiglies, mut brackets, mut angle_brackets, mut parens) = (0, 0, 0, 0);
+    for character in chars {
+        match character {
+            '[' | ']' => brackets += 1,
+            '(' | ')' => parens += 1,
+            '{' | '}' => squiglies += 1,
+            '<' | '>' => angle_brackets += 1,
+            _ => unimplemented!()
+        }
+    }
+    let mut score = 0;
+    if brackets > 0 && brackets % 2 != 0 {
+        score += 57;
+    } else if squiglies > 0 && squiglies % 2 != 0 {
+        score += 1197;
+    } else if angle_brackets > 0 && angle_brackets % 2 != 0 {
+        score += 25137;
+    } else if parens > 0 && parens % 2 != 0 {
+        score += 3;
+    }
+    println!("[]: {}, {{}}: {}, (): {}, <>: {}, score: {}", brackets, squiglies, parens, angle_brackets, score);
+
+    score
 }
