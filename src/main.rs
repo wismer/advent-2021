@@ -2,9 +2,11 @@ use std::fmt;
 use std::fs::{read_to_string, read};
 use std::collections::{HashMap, HashSet};
 mod day13;
+mod day14;
 
 fn main() {
     day13::solve();
+    day14::solve();
     // day_one_part_one();
     // day_one_part_two();
 
@@ -22,7 +24,8 @@ fn main() {
     // day_seven();
     // day_eight();
     // day_nine();
-    day_ten();
+    // day_ten();
+    
 }
 
 fn day_two_part_one() {

@@ -95,7 +95,7 @@ impl Graph {
             }
             for x in 0..self.size_x {
                 if self.graph[y][x].is_some() {
-                    buffer.push_str("#");
+                    buffer.push_str("*");
                 } else {
                     buffer.push_str(".");
                 }
